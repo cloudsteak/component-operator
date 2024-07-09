@@ -4,12 +4,13 @@ metadata:
   name: namespacechecker-sample
 spec:
   namespaces:
-  - redis
-  - nginx
+    - redis
+    - nginx
+    - ai-core
   configMapNames:
-  - ai-backend-config
+    - ai-backend-config
   configMapsNamespace: ai-core
   secretNames:
-  - ai-core
-  - ai-ghcr-login-secret
+    - ai-core
+    - ai-ghcr-login-secret
   secretsNamespace: ai-core

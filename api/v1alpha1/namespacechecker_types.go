@@ -23,11 +23,11 @@ type NamespaceCheckerSpec struct {
 type NamespaceCheckerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	NamespacesExist  map[string]bool   `json:"namespacesExist"`
-	ConfigMapsExists map[string]bool   `json:"configMapsExists"`
-	SecretsExists    map[string]bool   `json:"secretsExists"`
-	ConfigMapData    map[string]string `json:"configMapData,omitempty"`
-	SecretData       map[string][]byte `json:"secretData,omitempty"`
+	NamespacesExist  map[string]bool              `json:"namespacesExist"`
+	ConfigMapsExists map[string]bool              `json:"configMapsExists"`
+	SecretsExists    map[string]bool              `json:"secretsExists"`
+	ConfigMapsData   map[string]map[string]string `json:"configMapsData,omitempty"`
+	SecretsData      map[string]map[string][]byte `json:"secretsData,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -65,6 +65,16 @@ spec:
           status:
             description: NamespaceCheckerStatus defines the observed state of NamespaceChecker
             properties:
+              configMapsData:
+                additionalProperties:
+                  additionalProperties:
+                    type: string
+                  type: object
+                type: object
+              configMapsExists:
+                additionalProperties:
+                  type: boolean
+                type: object
               namespacesExist:
                 additionalProperties:
                   type: boolean
@@ -72,8 +82,21 @@ spec:
                   INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
                   Important: Run "make" to regenerate code after modifying this file
                 type: object
+              secretsData:
+                additionalProperties:
+                  additionalProperties:
+                    format: byte
+                    type: string
+                  type: object
+                type: object
+              secretsExists:
+                additionalProperties:
+                  type: boolean
+                type: object
             required:
+            - configMapsExists
             - namespacesExist
+            - secretsExists
             type: object
         type: object
     served: true

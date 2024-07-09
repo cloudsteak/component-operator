@@ -61,7 +61,7 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Check ConfigMaps existence and read data
 	configMaps := &v1.ConfigMap{}
 	configMapsExist := make(map[string]bool)
-	configMapsData := make(map[string]string)
+	configMapsData := make(map[string]map[string]string)
 	if nsExist[namespaceChecker.Spec.ConfigMapNamespace] {
 		for _, cm := range namespaceChecker.Spec.ConfigMapNames {
 			err := r.Get(ctx, types.NamespacedName{Name: cm, Namespace: namespaceChecker.Spec.ConfigMapNamespace}, configMaps)
@@ -69,9 +69,9 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				configMapsExist[cm] = false
 			} else if err == nil {
 				configMapsExist[cm] = true
-				configMapsData[cm] = configMaps.Data["data"]
+				configMapsData[cm] = configMaps.Data
 			} else {
-				log.Error(err, "unable to check configmap")
+				log.Error(err, "unable to check configmap", "configmap", cm)
 				return ctrl.Result{}, err
 			}
 
@@ -81,7 +81,7 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Check Secrets existence and read data
 	secrets := &v1.Secret{}
 	secretsExist := make(map[string]bool)
-	secretsData := make(map[string][]byte)
+	secretsData := make(map[string]map[string][]byte)
 	if nsExist[namespaceChecker.Spec.SecretsNamespace] {
 		for _, s := range namespaceChecker.Spec.SecretsNames {
 			err := r.Get(ctx, types.NamespacedName{Name: s, Namespace: namespaceChecker.Spec.SecretsNamespace}, secrets)
@@ -89,23 +89,27 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				secretsExist[s] = false
 			} else if err == nil {
 				secretsExist[s] = true
-				secretsData[s] = secrets.Data["data"]
+				secretsData[s] = secrets.Data
 			} else {
-				log.Error(err, "unable to check secret")
+				log.Error(err, "unable to check secret", "secret", s)
 				return ctrl.Result{}, err
 			}
 		}
 	}
 
 	// Log the status
-	log.Info("####### Namespace check result", "namespaces", nsExist)
+	log.Info("1. ####### Namespace check result", "namespaces", nsExist)
+	log.Info("2. ####### ConfigMap check result", "configmaps", configMapsExist)
+	log.Info("3. ####### Secret check result", "secrets", secretsExist)
+	log.Info("4. ####### ConfigMap data", "configmaps", configMapsData)
+	log.Info("5. ####### Secret data", "secrets", secretsData)
 
 	// Update the status
 	namespaceChecker.Status.NamespacesExist = nsExist
 	namespaceChecker.Status.ConfigMapsExists = configMapsExist
-	namespaceChecker.Status.ConfigMapData = configMapsData
+	namespaceChecker.Status.ConfigMapsData = configMapsData
 	namespaceChecker.Status.SecretsExists = secretsExist
-	namespaceChecker.Status.SecretData = secretsData
+	namespaceChecker.Status.SecretsData = secretsData
 
 	if err := r.Status().Update(ctx, &namespaceChecker); err != nil {
 		log.Error(err, "unable to update NamespaceChecker status")
