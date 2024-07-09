@@ -1,8 +1,11 @@
----
+# permissions for end users to edit namespacecheckers.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  labels:
+    app.kubernetes.io/name: component-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: namespacechecker-editor-role
 rules:
 - apiGroups:
   - api.component.cloudsteak.com
@@ -19,14 +22,6 @@ rules:
 - apiGroups:
   - api.component.cloudsteak.com
   resources:
-  - namespacecheckers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - api.component.cloudsteak.com
-  resources:
   - namespacecheckers/status
   verbs:
   - get
-  - patch
-  - update
