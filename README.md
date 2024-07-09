@@ -1,0 +1,2 @@
+# component-operator
+Kubebuilder - Operator
