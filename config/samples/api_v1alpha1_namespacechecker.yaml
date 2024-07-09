@@ -1,9 +1,16 @@
 apiVersion: api.component.cloudsteak.com/v1alpha1
 kind: NamespaceChecker
 metadata:
-  labels:
-    app.kubernetes.io/name: component-operator
-    app.kubernetes.io/managed-by: kustomize
   name: namespacechecker-sample
 spec:
-  
+  namespaces:
+  - ai-core
+  - hana
+  - redis
+  configMapNames:
+  - ai-backend-config
+  configMapNamespace: ai-core
+  secretNames:
+  - ai-core
+  - ai-ghcr-login-secret
+  secretNamespace: ai-core
