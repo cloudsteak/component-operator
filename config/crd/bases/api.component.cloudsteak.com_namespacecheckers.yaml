@@ -43,13 +43,13 @@ spec:
                 items:
                   type: string
                 type: array
-              configMapNamespace:
+              configMapsNamespace:
                 type: string
               namespaces:
                 items:
                   type: string
                 type: array
-              secretsNames:
+              secretNames:
                 items:
                   type: string
                 type: array
@@ -57,18 +57,14 @@ spec:
                 type: string
             required:
             - configMapNames
-            - configMapNamespace
+            - configMapsNamespace
             - namespaces
-            - secretsNames
+            - secretNames
             - secretsNamespace
             type: object
           status:
             description: NamespaceCheckerStatus defines the observed state of NamespaceChecker
             properties:
-              configMapsExist:
-                additionalProperties:
-                  type: boolean
-                type: object
               namespacesExist:
                 additionalProperties:
                   type: boolean
@@ -76,14 +72,8 @@ spec:
                   INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
                   Important: Run "make" to regenerate code after modifying this file
                 type: object
-              secretsExist:
-                additionalProperties:
-                  type: boolean
-                type: object
             required:
-            - configMapsExist
             - namespacesExist
-            - secretsExist
             type: object
         type: object
     served: true

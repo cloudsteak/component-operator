@@ -14,8 +14,8 @@ type NamespaceCheckerSpec struct {
 
 	Namespaces         []string `json:"namespaces"`
 	ConfigMapNames     []string `json:"configMapNames"`
-	ConfigMapNamespace string   `json:"configMapNamespace"`
-	SecretsNames       []string `json:"secretsNames"`
+	ConfigMapNamespace string   `json:"configMapsNamespace"`
+	SecretsNames       []string `json:"secretNames"`
 	SecretsNamespace   string   `json:"secretsNamespace"`
 }
 
@@ -23,9 +23,11 @@ type NamespaceCheckerSpec struct {
 type NamespaceCheckerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	NamespacesExist map[string]bool `json:"namespacesExist"`
-	ConfigMapsExist map[string]bool `json:"configMapsExist"`
-	SecretsExist    map[string]bool `json:"secretsExist"`
+	NamespacesExist  map[string]bool   `json:"namespacesExist"`
+	ConfigMapsExists map[string]bool   `json:"configMapsExists"`
+	SecretsExists    map[string]bool   `json:"secretsExists"`
+	ConfigMapData    map[string]string `json:"configMapData,omitempty"`
+	SecretData       map[string][]byte `json:"secretData,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -47,8 +49,7 @@ type NamespaceCheckerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Spec   NamespaceCheckerSpec   `json:"spec,omitempty"`
-	Status NamespaceCheckerStatus `json:"status,omitempty"`
+	Items []NamespaceChecker `json:"items"`
 }
 
 func init() {

@@ -35,32 +35,34 @@ make manifests
 make install
 ```
 
-7. Create deployment
+7. Configure sample CRD
 
 ```bash
-kubectl create deploy nginx --image=nginx
-```
-
-8. Configure scaler
-
-```bash
-nano config/samples/api_v1alpha1_scaler.yaml
+nano config/samples/api_v1alpha1_namespacechecker.yaml
 ```
 
 ```yaml
+apiVersion: api.component.cloudsteak.com/v1alpha1
+kind: NamespaceChecker
+metadata:
+  name: namespacechecker-sample
 spec:
-  start: 5 # UTC time
-  end: 11 # UTC time
-  replicas: 2
-  deployments:
-    - name: nginx
-      namespace: nginx
+  namespaces:
+  - default
+  configMapNames:
+  - configmap-01
+  configMapsNamespace: default
+  secretNames:
+  - secret-1
+  - secret-2
+  secretsNamespace: default
+
 ```
 
 9. Create scaler
 
 ```bash
-kubectl apply -f config/samples/api_v1alpha1_scaler.yaml
+kubectl apply -f config/samples/api_v1alpha1_namespacechecker.yaml
 ```
 
 10. Run the controller
