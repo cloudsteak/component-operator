@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	apiv1alpha1 "github.com/cloudsteak/component-operator.git/api/v1alpha1"
@@ -118,6 +119,55 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
+	// Check deployment prerequisites
+	// Check if all namespaces exist
+	allExist := true
+	for _, exist := range nsExist {
+		if !exist {
+			allExist = false
+			break
+		}
+	}
+
+	// Check if all ConfigMaps exist
+	allConfigMapsExist := true
+	for _, exist := range configMapsExist {
+		if !exist {
+			allConfigMapsExist = false
+			break
+		}
+	}
+
+	// Check if all Secrets exist
+	allSecretsExist := true
+	for _, exist := range secretsExist {
+		if !exist {
+			allSecretsExist = false
+			break
+		}
+	}
+
+	if allExist && allConfigMapsExist && allSecretsExist {
+		// Create deployment
+		deployment := r.deploymentForNamespaceChecker(&namespaceChecker)
+		if err := controllerutil.SetControllerReference(&namespaceChecker, deployment, r.Scheme); err != nil {
+			log.Error(err, "unable to set owner reference on deployment")
+			return ctrl.Result{}, err
+		}
+
+		found := &appsv1.Deployment{}
+		err := r.Get(ctx, types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, found)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Creating a new Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
+			err = r.Create(ctx, deployment)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		} else if err != nil {
+			return ctrl.Result{}, err
+		}
+
+	}
 	return ctrl.Result{}, nil
 }
 
