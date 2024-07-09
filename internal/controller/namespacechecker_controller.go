@@ -3,8 +3,10 @@ package controller
 import (
 	"context"
 
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metacorev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,7 +48,7 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Check namespaces existence
 	nsExist := make(map[string]bool)
 	for _, ns := range namespaceChecker.Spec.Namespaces {
-		namespace := &v1.Namespace{}
+		namespace := &corev1.Namespace{}
 		err := r.Get(ctx, types.NamespacedName{Name: ns}, namespace)
 		if err != nil && errors.IsNotFound(err) {
 			nsExist[ns] = false
@@ -59,7 +61,7 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Check ConfigMaps existence and read data
-	configMaps := &v1.ConfigMap{}
+	configMaps := &corev1.ConfigMap{}
 	configMapsExist := make(map[string]bool)
 	configMapsData := make(map[string]map[string]string)
 	if nsExist[namespaceChecker.Spec.ConfigMapNamespace] {
@@ -79,7 +81,7 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Check Secrets existence and read data
-	secrets := &v1.Secret{}
+	secrets := &corev1.Secret{}
 	secretsExist := make(map[string]bool)
 	secretsData := make(map[string]map[string][]byte)
 	if nsExist[namespaceChecker.Spec.SecretsNamespace] {
@@ -124,4 +126,96 @@ func (r *NamespaceCheckerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1alpha1.NamespaceChecker{}).
 		Complete(r)
+}
+
+func (r *NamespaceCheckerReconciler) deploymentForNamespaceChecker(nsChecker *apiv1alpha1.NamespaceChecker) *appsv1.Deployment {
+	name := "companion-backend-test"
+	labels := map[string]string{"app": name}
+	replicas := int32(1)
+	imageFullName := "ghcr.io/kyma-project/ai-force/ai-backend:latest"
+	namespaceName := "ai-core"
+	configMapName := "ai-backend-config"
+	companionSecretName := "ai-core"
+	ghSecretName := "ai-ghcr-login-secret"
+	serviceAccountName := "ai-backend-service-account"
+
+	return &appsv1.Deployment{
+		ObjectMeta: metacorev1.ObjectMeta{
+			Name:      namespaceName + "-deployment",
+			Labels:    labels,
+			Namespace: namespaceName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metacorev1.LabelSelector{
+				MatchLabels: labels},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metacorev1.ObjectMeta{Labels: labels},
+				Spec: corev1.PodSpec{
+					ImagePullSecrets:   []corev1.LocalObjectReference{{Name: ghSecretName}},
+					RestartPolicy:      corev1.RestartPolicyAlways,
+					ServiceAccountName: serviceAccountName,
+					Containers: []corev1.Container{
+						{
+							Name:  name,
+							Image: imageFullName,
+							Ports: []corev1.ContainerPort{{
+								ContainerPort: 5000,
+							}},
+							ImagePullPolicy: corev1.PullAlways,
+							EnvFrom: []corev1.EnvFromSource{{
+								ConfigMapRef: &corev1.ConfigMapEnvSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: configMapName},
+								},
+							}},
+							Env: []corev1.EnvVar{
+								{
+									Name: "AICORE_LLM_CLIENT_SECRET",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											Key: "clientsecret",
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: companionSecretName,
+											},
+										},
+									},
+								}, {
+									Name: "AICORE_LLM_CLIENT_ID",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											Key: "clientid",
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: companionSecretName,
+											},
+										},
+									},
+								},
+								{
+									Name: "AICORE_LLM_AUTH_URL",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											Key: "url",
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: companionSecretName,
+											},
+										},
+									},
+								}, {
+									Name: "AICORE_SERVICE_URLS",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											Key: "serviceurls",
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: companionSecretName,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
