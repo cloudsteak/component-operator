@@ -1,0 +1,108 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.15.0
+  name: namespacecheckers.api.component.cloudsteak.com
+spec:
+  group: api.component.cloudsteak.com
+  names:
+    kind: NamespaceChecker
+    listKind: NamespaceCheckerList
+    plural: namespacecheckers
+    singular: namespacechecker
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NamespaceChecker is the Schema for the namespacecheckers API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NamespaceCheckerSpec defines the desired state of NamespaceChecker
+            properties:
+              configMapNames:
+                items:
+                  type: string
+                type: array
+              configMapsNamespace:
+                type: string
+              deploymentNamespace:
+                type: string
+              namespaces:
+                items:
+                  type: string
+                type: array
+              secretNames:
+                items:
+                  type: string
+                type: array
+              secretsNamespace:
+                type: string
+            required:
+            - configMapNames
+            - configMapsNamespace
+            - deploymentNamespace
+            - namespaces
+            - secretNames
+            - secretsNamespace
+            type: object
+          status:
+            description: NamespaceCheckerStatus defines the observed state of NamespaceChecker
+            properties:
+              configMapsData:
+                additionalProperties:
+                  additionalProperties:
+                    type: string
+                  type: object
+                type: object
+              configMapsExists:
+                additionalProperties:
+                  type: boolean
+                type: object
+              namespacesExist:
+                additionalProperties:
+                  type: boolean
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                type: object
+              secretsData:
+                additionalProperties:
+                  additionalProperties:
+                    format: byte
+                    type: string
+                  type: object
+                type: object
+              secretsExists:
+                additionalProperties:
+                  type: boolean
+                type: object
+            required:
+            - configMapsExists
+            - namespacesExist
+            - secretsExists
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

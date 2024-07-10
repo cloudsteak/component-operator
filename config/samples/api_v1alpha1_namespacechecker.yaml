@@ -1,0 +1,17 @@
+apiVersion: api.component.cloudsteak.com/v1alpha1
+kind: NamespaceChecker
+metadata:
+  name: namespacechecker-sample
+spec:
+  namespaces:
+    - redis
+    - nginx
+    - ai-core
+  configMapNames:
+    - ai-backend-config
+  configMapsNamespace: ai-core
+  secretNames:
+    - ai-core
+    - ai-ghcr-login-secret
+  secretsNamespace: ai-core
+  deploymentNamespace: ai-core

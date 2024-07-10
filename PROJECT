@@ -7,4 +7,14 @@ layout:
 - go.kubebuilder.io/v4
 projectName: component-operator
 repo: github.com/cloudsteak/component-operator.git
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: component.cloudsteak.com
+  group: api
+  kind: NamespaceChecker
+  path: github.com/cloudsteak/component-operator.git/api/v1alpha1
+  version: v1alpha1
 version: "3"
