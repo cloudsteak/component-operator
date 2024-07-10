@@ -12,11 +12,12 @@ type NamespaceCheckerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Namespaces         []string `json:"namespaces"`
-	ConfigMapNames     []string `json:"configMapNames"`
-	ConfigMapNamespace string   `json:"configMapsNamespace"`
-	SecretsNames       []string `json:"secretNames"`
-	SecretsNamespace   string   `json:"secretsNamespace"`
+	Namespaces          []string `json:"namespaces"`
+	ConfigMapNames      []string `json:"configMapNames"`
+	ConfigMapNamespace  string   `json:"configMapsNamespace"`
+	SecretsNames        []string `json:"secretNames"`
+	SecretsNamespace    string   `json:"secretsNamespace"`
+	DeploymentNamespace string   `json:"deploymentNamespace"`
 }
 
 // NamespaceCheckerStatus defines the observed state of NamespaceChecker

@@ -14,3 +14,4 @@ spec:
     - ai-core
     - ai-ghcr-login-secret
   secretsNamespace: ai-core
+  deploymentNamespace: ai-core

@@ -45,6 +45,8 @@ spec:
                 type: array
               configMapsNamespace:
                 type: string
+              deploymentNamespace:
+                type: string
               namespaces:
                 items:
                   type: string
@@ -58,6 +60,7 @@ spec:
             required:
             - configMapNames
             - configMapsNamespace
+            - deploymentNamespace
             - namespaces
             - secretNames
             - secretsNamespace

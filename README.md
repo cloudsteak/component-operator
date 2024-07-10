@@ -56,6 +56,7 @@ spec:
   - secret-1
   - secret-2
   secretsNamespace: default
+  deploymentNamespace: default
 
 ```
 

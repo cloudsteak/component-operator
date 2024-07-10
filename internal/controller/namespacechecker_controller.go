@@ -6,12 +6,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metacorev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	apiv1alpha1 "github.com/cloudsteak/component-operator.git/api/v1alpha1"
@@ -101,11 +101,11 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Log the status
-	log.Info("1. ####### Namespace check result", "namespaces", nsExist)
+	/**log.Info("1. ####### Namespace check result", "namespaces", nsExist)
 	log.Info("2. ####### ConfigMap check result", "configmaps", configMapsExist)
 	log.Info("3. ####### Secret check result", "secrets", secretsExist)
 	log.Info("4. ####### ConfigMap data", "configmaps", configMapsData)
-	log.Info("5. ####### Secret data", "secrets", secretsData)
+	log.Info("5. ####### Secret data", "secrets", secretsData)**/
 
 	// Update the status
 	namespaceChecker.Status.NamespacesExist = nsExist
@@ -121,39 +121,21 @@ func (r *NamespaceCheckerReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// Check deployment prerequisites
 	// Check if all namespaces exist
-	allExist := true
-	for _, exist := range nsExist {
-		if !exist {
-			allExist = false
-			break
-		}
-	}
+	allExist := checkAllExist(nsExist)
 
 	// Check if all ConfigMaps exist
-	allConfigMapsExist := true
-	for _, exist := range configMapsExist {
-		if !exist {
-			allConfigMapsExist = false
-			break
-		}
-	}
+	allConfigMapsExist := checkAllExist(configMapsExist)
 
 	// Check if all Secrets exist
-	allSecretsExist := true
-	for _, exist := range secretsExist {
-		if !exist {
-			allSecretsExist = false
-			break
-		}
-	}
+	allSecretsExist := checkAllExist(secretsExist)
 
 	if allExist && allConfigMapsExist && allSecretsExist {
 		// Create deployment
 		deployment := r.deploymentForNamespaceChecker(&namespaceChecker)
-		if err := controllerutil.SetControllerReference(&namespaceChecker, deployment, r.Scheme); err != nil {
+		/**if err := controllerutil.SetControllerReference(&namespaceChecker, deployment, r.Scheme); err != nil {
 			log.Error(err, "unable to set owner reference on deployment")
 			return ctrl.Result{}, err
-		}
+		}**/
 
 		found := &appsv1.Deployment{}
 		err := r.Get(ctx, types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, found)
@@ -183,7 +165,6 @@ func (r *NamespaceCheckerReconciler) deploymentForNamespaceChecker(nsChecker *ap
 	labels := map[string]string{"app": name}
 	replicas := int32(1)
 	imageFullName := "ghcr.io/kyma-project/ai-force/ai-backend:latest"
-	namespaceName := "ai-core"
 	configMapName := "ai-backend-config"
 	companionSecretName := "ai-core"
 	ghSecretName := "ai-ghcr-login-secret"
@@ -191,9 +172,9 @@ func (r *NamespaceCheckerReconciler) deploymentForNamespaceChecker(nsChecker *ap
 
 	return &appsv1.Deployment{
 		ObjectMeta: metacorev1.ObjectMeta{
-			Name:      namespaceName + "-deployment",
+			Name:      name + "-deployment",
 			Labels:    labels,
-			Namespace: namespaceName,
+			Namespace: nsChecker.Spec.DeploymentNamespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -212,6 +193,16 @@ func (r *NamespaceCheckerReconciler) deploymentForNamespaceChecker(nsChecker *ap
 							Ports: []corev1.ContainerPort{{
 								ContainerPort: 5000,
 							}},
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("1"),
+									corev1.ResourceMemory: resource.MustParse("1Gi"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("256Mi"),
+								},
+							},
 							ImagePullPolicy: corev1.PullAlways,
 							EnvFrom: []corev1.EnvFromSource{{
 								ConfigMapRef: &corev1.ConfigMapEnvSource{
@@ -268,4 +259,17 @@ func (r *NamespaceCheckerReconciler) deploymentForNamespaceChecker(nsChecker *ap
 			},
 		},
 	}
+}
+
+func checkAllExist(inputObject map[string]bool) bool {
+	// Check if all ConfigMaps exist
+	allObjectExist := true
+	for _, exist := range inputObject {
+		if !exist {
+			allObjectExist = false
+			break
+		}
+	}
+
+	return allObjectExist
 }
